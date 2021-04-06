@@ -1,0 +1,59 @@
+version: '3'
+
+networks:
+  laravel:
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: nginx_app.dockerfile
+    container_name: nginxx
+    scale: 3
+    ports:
+      - 80:80
+    volumes:
+      - ./app:/var/www/html:delegated
+    depends_on:
+      - php
+    networks:
+      - laravel
+      
+  php:
+    build:
+      context: .
+      dockerfile: php.dockerfile
+    container_name: php
+    volumes:
+      - ./app:/var/www/html:delegated
+    networks:
+      - laravel
+
+  mysql:
+    image: mysql:8.0.23
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+    volumes:
+      - ./mysql/my.cnf:/etc/my.cnf
+    restart: always
+    environment:
+      MYSQL_DATABASE: mebdocker
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: test_1234_5678
+      MYSQL_ROOT_PASSWORD: r_1234_5678
+    networks:
+      - laravel
+      
+  myphpadmin:
+    image: phpmyadmin
+    restart: always
+    links:
+      - mysql
+    ports:
+      - 8282:80
+    environment:
+      - PMA_ARBITRARY=1 
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
+    networks:
+      - laravel
